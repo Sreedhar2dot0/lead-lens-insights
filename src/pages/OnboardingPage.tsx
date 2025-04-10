@@ -90,29 +90,8 @@ const OnboardingPage = () => {
     setStep(step - 1);
   };
 
-  const validateStep = async () => {
-    try {
-      if (step === 1) {
-        const result = await form.trigger(["name", "companyName", "type", "contactPerson", "email", "phone"]);
-        if (result) nextStep();
-      } else if (step === 2) {
-        const result = await form.trigger(["address", "city", "state", "pincode", "panNumber"]);
-        if (result) nextStep();
-      } else if (step === 3) {
-        console.log("Validating bank details...");
-        const result = await form.trigger([
-          "accountNumber", "ifscCode", "bankName", "branchName", "establishedYear"
-        ]);
-        console.log("Validation result:", result);
-        if (result) nextStep();
-      } else if (step === 4) {
-        const result = await form.trigger(["targetLeads", "targetDisbursementAmount"]);
-        if (result) nextStep();
-      }
-    } catch (error) {
-      console.error("Validation error:", error);
-      toast.error("There was an error validating your information.");
-    }
+  const handleStepNavigation = () => {
+    nextStep();
   };
 
   const handleSendForSignature = () => {
@@ -612,7 +591,7 @@ const OnboardingPage = () => {
             <div></div>
           )}
           {step < 5 ? (
-            <Button type="button" onClick={validateStep}>
+            <Button type="button" onClick={handleStepNavigation}>
               Next
             </Button>
           ) : (
