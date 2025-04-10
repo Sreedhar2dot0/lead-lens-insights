@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Building, CheckCircle, User, Bank, FileText, Upload } from "lucide-react";
+import { Building, CheckCircle, User, Landmark, FileText, Upload } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -102,7 +101,6 @@ const OnboardingPage = () => {
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-finance-blue-dark">Intermediary Onboarding</h1>
       
-      {/* Progress Steps */}
       <div className="flex mb-8 justify-between">
         <div className="flex flex-col items-center">
           <div className={`rounded-full w-10 h-10 flex items-center justify-center ${
@@ -132,7 +130,7 @@ const OnboardingPage = () => {
           <div className={`rounded-full w-10 h-10 flex items-center justify-center ${
             step >= 3 ? "bg-finance-blue text-white" : "bg-gray-200 text-gray-500"
           }`}>
-            <Bank size={20} />
+            <Landmark size={20} />
           </div>
           <span className="text-sm mt-2">Banking</span>
         </div>
