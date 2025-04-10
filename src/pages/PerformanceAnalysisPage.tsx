@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -8,13 +7,17 @@ import {
   Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell
 } from "recharts";
 import { 
-  ArrowUp, ArrowDown, Download, TrendingUp, Users, AlertCircle, CheckCircle2, Clock
+  ArrowUp, ArrowDown, Download, TrendingUp, Users, AlertCircle, CheckCircle2, Clock,
+  Target, Edit, Trash2, Plus, Save
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { getIntermediaryDetails, getPerformanceMetrics, formatCurrency, formatPercentage } from "@/lib/mockData";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-// Helper function to calculate performance indicator
 const getPerformanceIndicator = (actual: number, target: number) => {
   const percentage = (actual / target) * 100;
   if (percentage >= 100) return { label: "Excellent", color: "text-finance-green" };
@@ -23,71 +26,139 @@ const getPerformanceIndicator = (actual: number, target: number) => {
   return { label: "Needs Improvement", color: "text-finance-red" };
 };
 
+interface TargetItem {
+  id: string;
+  category: string;
+  count: number;
+  amount: number;
+  isEditing?: boolean;
+}
+
+interface TargetMaster {
+  id: string;
+  name: string;
+  description: string;
+  targets: TargetItem[];
+}
+
+const targetMasters: TargetMaster[] = [
+  {
+    id: "small-dsa",
+    name: "Small DSA Target",
+    description: "Default targets for small DSA partners",
+    targets: [
+      { id: "lead-q1", category: "Lead Referrals - Q1", count: 30, amount: 1500000 },
+      { id: "lead-q2", category: "Lead Referrals - Q2", count: 40, amount: 2000000 },
+      { id: "lead-q3", category: "Lead Referrals - Q3", count: 50, amount: 2500000 },
+      { id: "lead-q4", category: "Lead Referrals - Q4", count: 60, amount: 3000000 },
+      { id: "disb-q1", category: "Disbursements - Q1", count: 20, amount: 1000000 },
+      { id: "disb-q2", category: "Disbursements - Q2", count: 30, amount: 1500000 },
+      { id: "disb-q3", category: "Disbursements - Q3", count: 35, amount: 1750000 },
+      { id: "disb-q4", category: "Disbursements - Q4", count: 40, amount: 2000000 },
+    ]
+  },
+  {
+    id: "large-dsa",
+    name: "Large DSA Target",
+    description: "Default targets for large DSA partners",
+    targets: [
+      { id: "lead-q1", category: "Lead Referrals - Q1", count: 100, amount: 5000000 },
+      { id: "lead-q2", category: "Lead Referrals - Q2", count: 120, amount: 6000000 },
+      { id: "lead-q3", category: "Lead Referrals - Q3", count: 140, amount: 7000000 },
+      { id: "lead-q4", category: "Lead Referrals - Q4", count: 160, amount: 8000000 },
+      { id: "disb-q1", category: "Disbursements - Q1", count: 70, amount: 3500000 },
+      { id: "disb-q2", category: "Disbursements - Q2", count: 80, amount: 4000000 },
+      { id: "disb-q3", category: "Disbursements - Q3", count: 90, amount: 4500000 },
+      { id: "disb-q4", category: "Disbursements - Q4", count: 100, amount: 5000000 },
+    ]
+  },
+  {
+    id: "medium-dsa",
+    name: "Medium DSA Target",
+    description: "Default targets for medium DSA partners",
+    targets: [
+      { id: "lead-q1", category: "Lead Referrals - Q1", count: 60, amount: 3000000 },
+      { id: "lead-q2", category: "Lead Referrals - Q2", count: 70, amount: 3500000 },
+      { id: "lead-q3", category: "Lead Referrals - Q3", count: 80, amount: 4000000 },
+      { id: "lead-q4", category: "Lead Referrals - Q4", count: 90, amount: 4500000 },
+      { id: "disb-q1", category: "Disbursements - Q1", count: 40, amount: 2000000 },
+      { id: "disb-q2", category: "Disbursements - Q2", count: 45, amount: 2250000 },
+      { id: "disb-q3", category: "Disbursements - Q3", count: 50, amount: 2500000 },
+      { id: "disb-q4", category: "Disbursements - Q4", count: 55, amount: 2750000 },
+    ]
+  }
+];
+
 const PerformanceAnalysisPage = () => {
   const intermediary = getIntermediaryDetails();
   const metrics = getPerformanceMetrics();
+  const [selectedTargetMaster, setSelectedTargetMaster] = useState<string>("");
+  const [currentTargets, setCurrentTargets] = useState<TargetItem[]>([]);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   
-  // Calculate total values
-  const totalLeadsReferred = metrics.reduce((sum, m) => sum + m.leadsReferred, 0);
-  const totalTargetLeads = metrics.reduce((sum, m) => sum + m.targetLeads, 0);
-  const totalLeadsConverted = metrics.reduce((sum, m) => sum + m.leadsConverted, 0);
-  const totalAmountDisbursed = metrics.reduce((sum, m) => sum + m.amountDisbursed, 0);
-  const totalTargetDisbursement = metrics.reduce((sum, m) => sum + m.targetDisbursement, 0);
-  
-  // Calculate loan quality metrics
-  const totalAccounts = metrics.reduce((sum, m) => sum + m.totalAccounts, 0);
-  const totalOnTimeAccounts = metrics.reduce((sum, m) => sum + m.onTimeAccounts, 0);
-  const totalDpd30Accounts = metrics.reduce((sum, m) => sum + m.dpd30Accounts, 0);
-  const totalDpd60Accounts = metrics.reduce((sum, m) => sum + m.dpd60Accounts, 0);
-  const totalDpd90Accounts = metrics.reduce((sum, m) => sum + m.dpd90Accounts, 0);
-  const totalNpaAccounts = metrics.reduce((sum, m) => sum + m.npaAccounts, 0);
-  
-  // Convert to percentages
-  const onTimePercentage = (totalOnTimeAccounts / totalAccounts) * 100;
-  const dpd30Percentage = (totalDpd30Accounts / totalAccounts) * 100;
-  const dpd60Percentage = (totalDpd60Accounts / totalAccounts) * 100;
-  const dpd90Percentage = (totalDpd90Accounts / totalAccounts) * 100;
-  const npaPercentage = (totalNpaAccounts / totalAccounts) * 100;
-
-  // Calculate lead conversion rate
-  const leadConversionRate = (totalLeadsConverted / totalLeadsReferred) * 100;
-  
-  // Calculate performance against targets
-  const leadsPerformance = (totalLeadsReferred / totalTargetLeads) * 100;
-  const disbursementPerformance = (totalAmountDisbursed / totalTargetDisbursement) * 100;
-  
-  // Get latest month performance
-  const latestMonth = metrics[metrics.length - 1];
-  
-  // Create data for portfolio quality pie chart
-  const portfolioQualityData = [
-    { name: "On-time", value: totalOnTimeAccounts, color: "#00B368" },
-    { name: "DPD 1-30", value: totalDpd30Accounts, color: "#FFB800" },
-    { name: "DPD 31-60", value: totalDpd60Accounts, color: "#FF9500" },
-    { name: "DPD 61-90", value: totalDpd90Accounts, color: "#FF6B00" },
-    { name: "NPA", value: totalNpaAccounts, color: "#FF3B3B" }
-  ];
-
-  // Helper function for performance trend
-  const getPerformanceTrend = (current: number, previous: number) => {
-    const change = ((current - previous) / previous) * 100;
-    return {
-      isUp: change >= 0,
-      change: Math.abs(change).toFixed(1)
-    };
+  const handleTargetMasterChange = (value: string) => {
+    setSelectedTargetMaster(value);
+    const selectedMaster = targetMasters.find(tm => tm.id === value);
+    if (selectedMaster) {
+      setCurrentTargets(JSON.parse(JSON.stringify(selectedMaster.targets)));
+    } else {
+      setCurrentTargets([]);
+    }
   };
   
-  // Calculate performance trends (comparing last month with previous month)
-  const leadsReferredTrend = getPerformanceTrend(
-    metrics[metrics.length - 1].leadsReferred,
-    metrics[metrics.length - 2].leadsReferred
-  );
+  const toggleEditTarget = (id: string) => {
+    setCurrentTargets(prev => 
+      prev.map(target => 
+        target.id === id 
+          ? { ...target, isEditing: !target.isEditing } 
+          : target
+      )
+    );
+  };
   
-  const disbursementTrend = getPerformanceTrend(
-    metrics[metrics.length - 1].amountDisbursed,
-    metrics[metrics.length - 2].amountDisbursed
-  );
-
+  const deleteTarget = (id: string) => {
+    setCurrentTargets(prev => prev.filter(target => target.id !== id));
+    toast("Target deleted successfully");
+  };
+  
+  const updateTargetValue = (id: string, field: 'count' | 'amount', value: string) => {
+    const numValue = Number(value);
+    if (isNaN(numValue)) return;
+    
+    setCurrentTargets(prev => 
+      prev.map(target => 
+        target.id === id 
+          ? { ...target, [field]: numValue } 
+          : target
+      )
+    );
+  };
+  
+  const addNewTarget = () => {
+    const newId = `new-target-${Date.now()}`;
+    setCurrentTargets(prev => [
+      ...prev, 
+      { 
+        id: newId, 
+        category: "New Target", 
+        count: 0, 
+        amount: 0, 
+        isEditing: true 
+      }
+    ]);
+  };
+  
+  const saveTargets = () => {
+    toast.success("Targets saved successfully");
+    setSaveSuccess(true);
+    
+    setCurrentTargets(prev => 
+      prev.map(target => ({ ...target, isEditing: false }))
+    );
+    
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
+  
   return (
     <div>
       <div className="flex flex-wrap justify-between items-center mb-6">
@@ -215,6 +286,7 @@ const PerformanceAnalysisPage = () => {
           <TabsTrigger value="leads">Lead Performance</TabsTrigger>
           <TabsTrigger value="disbursement">Disbursement</TabsTrigger>
           <TabsTrigger value="portfolio">Portfolio Quality</TabsTrigger>
+          <TabsTrigger value="target-setting">Target Setting</TabsTrigger>
         </TabsList>
         
         <TabsContent value="leads">
@@ -268,7 +340,7 @@ const PerformanceAnalysisPage = () => {
                     <h4 className="text-sm font-semibold mb-4">Last 3 Months</h4>
                     {metrics.slice(-3).map((month, idx) => {
                       const convRate = (month.leadsConverted / month.leadsReferred) * 100;
-                      const performance = getPerformanceIndicator(convRate, 40); // Assuming 40% is the target
+                      const performance = getPerformanceIndicator(convRate, 40);
                       
                       return (
                         <div key={idx} className="mb-4">
@@ -577,6 +649,194 @@ const PerformanceAnalysisPage = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="target-setting">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="flex items-center text-finance-blue-dark">
+                      <Target className="mr-2 h-5 w-5" />
+                      Target Setting
+                    </CardTitle>
+                    <CardDescription>
+                      Set sourcing lead and disbursement targets for this intermediary
+                    </CardDescription>
+                  </div>
+                  {selectedTargetMaster && (
+                    <Button 
+                      onClick={saveTargets}
+                      className="bg-finance-blue hover:bg-finance-blue-dark"
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Targets
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="max-w-md">
+                    <label htmlFor="target-template" className="block text-sm font-medium mb-1">
+                      Select Target Template
+                    </label>
+                    <Select 
+                      value={selectedTargetMaster} 
+                      onValueChange={handleTargetMasterChange}
+                    >
+                      <SelectTrigger id="target-template" className="w-full">
+                        <SelectValue placeholder="Select a target template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {targetMasters.map((master) => (
+                          <SelectItem key={master.id} value={master.id}>
+                            {master.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedTargetMaster && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {targetMasters.find(tm => tm.id === selectedTargetMaster)?.description}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {selectedTargetMaster && (
+                    <div className="mt-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold text-finance-blue-dark">
+                          Current Targets
+                        </h3>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={addNewTarget}
+                          className="flex items-center text-finance-blue border-finance-blue"
+                        >
+                          <Plus className="mr-1 h-4 w-4" />
+                          Add Target
+                        </Button>
+                      </div>
+                      
+                      <div className="rounded-md border overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-finance-blue-light">
+                              <TableHead className="text-finance-blue-dark">Category</TableHead>
+                              <TableHead className="text-finance-blue-dark text-right">Count</TableHead>
+                              <TableHead className="text-finance-blue-dark text-right">Amount (₹)</TableHead>
+                              <TableHead className="text-finance-blue-dark text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentTargets.map((target) => (
+                              <TableRow key={target.id}>
+                                <TableCell>
+                                  {target.isEditing ? (
+                                    <Input 
+                                      value={target.category} 
+                                      onChange={(e) => {
+                                        setCurrentTargets(prev => 
+                                          prev.map(t => 
+                                            t.id === target.id 
+                                              ? { ...t, category: e.target.value } 
+                                              : t
+                                          )
+                                        );
+                                      }}
+                                      className="max-w-[200px]"
+                                    />
+                                  ) : (
+                                    target.category
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {target.isEditing ? (
+                                    <Input 
+                                      type="number"
+                                      value={target.count} 
+                                      onChange={(e) => updateTargetValue(target.id, 'count', e.target.value)}
+                                      className="max-w-[100px] ml-auto"
+                                    />
+                                  ) : (
+                                    target.count
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {target.isEditing ? (
+                                    <Input 
+                                      type="number"
+                                      value={target.amount} 
+                                      onChange={(e) => updateTargetValue(target.id, 'amount', e.target.value)}
+                                      className="max-w-[130px] ml-auto"
+                                    />
+                                  ) : (
+                                    formatCurrency(target.amount)
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end space-x-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => toggleEditTarget(target.id)}
+                                    >
+                                      <Edit className="h-4 w-4 text-finance-blue" />
+                                    </Button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                          <Trash2 className="h-4 w-4 text-finance-red" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                          className="text-finance-red focus:text-finance-red"
+                                          onClick={() => deleteTarget(target.id)}
+                                        >
+                                          Confirm Delete
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      
+                      {currentTargets.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          No targets have been set. Click "Add Target" to create a new target.
+                        </div>
+                      )}
+                      
+                      {currentTargets.length > 0 && (
+                        <div className="mt-4 flex justify-end">
+                          <div className="text-sm text-gray-500 mr-4">
+                            Total Targets: <span className="font-semibold">{currentTargets.length}</span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Total Amount: <span className="font-semibold">{formatCurrency(currentTargets.reduce((sum, target) => sum + target.amount, 0))}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {!selectedTargetMaster && (
+                    <div className="text-center py-10 text-gray-500">
+                      Please select a target template to continue.
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
