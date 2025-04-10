@@ -2,6 +2,7 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import { useLocation } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
 
 export const Layout = () => {
   const location = useLocation();
@@ -13,6 +14,7 @@ export const Layout = () => {
       <main className={`${isHome ? '' : 'container py-8'}`}>
         <Outlet />
       </main>
+      <Toaster />
     </div>
   );
 };

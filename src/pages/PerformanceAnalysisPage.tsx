@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const getPerformanceIndicator = (actual: number, target: number) => {
   const percentage = (actual / target) * 100;
@@ -95,6 +97,49 @@ const PerformanceAnalysisPage = () => {
   const [selectedTargetMaster, setSelectedTargetMaster] = useState<string>("");
   const [currentTargets, setCurrentTargets] = useState<TargetItem[]>([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const { toast } = useToast();
+  
+  // Calculate performance metrics from the data
+  const totalLeadsReferred = metrics.reduce((sum, month) => sum + month.leadsReferred, 0);
+  const totalLeadsConverted = metrics.reduce((sum, month) => sum + month.leadsConverted, 0);
+  const totalTargetLeads = metrics.reduce((sum, month) => sum + month.targetLeads, 0);
+  const totalAmountDisbursed = metrics.reduce((sum, month) => sum + month.amountDisbursed, 0);
+  const totalTargetDisbursement = metrics.reduce((sum, month) => sum + month.targetDisbursement, 0);
+  const totalOnTimeAccounts = metrics.reduce((sum, month) => sum + month.onTimeAccounts, 0);
+  const totalAccounts = metrics.reduce((sum, month) => sum + month.totalAccounts, 0);
+  const totalDpd30Accounts = metrics.reduce((sum, month) => sum + month.dpd30Accounts, 0);
+  const totalDpd60Accounts = metrics.reduce((sum, month) => sum + month.dpd60Accounts, 0);
+  const totalDpd90Accounts = metrics.reduce((sum, month) => sum + month.dpd90Accounts, 0);
+  const totalNpaAccounts = metrics.reduce((sum, month) => sum + month.npaAccounts, 0);
+  
+  // Calculate percentage metrics
+  const leadsPerformance = (totalLeadsReferred / totalTargetLeads) * 100;
+  const disbursementPerformance = (totalAmountDisbursed / totalTargetDisbursement) * 100;
+  const leadConversionRate = (totalLeadsConverted / totalLeadsReferred) * 100;
+  const onTimePercentage = (totalOnTimeAccounts / totalAccounts) * 100;
+  const dpd90Percentage = ((totalDpd90Accounts + totalNpaAccounts) / totalAccounts) * 100;
+  
+  // Trend data (compare with previous period)
+  const leadsReferredTrend = {
+    isUp: metrics[metrics.length - 1].leadsReferred > metrics[metrics.length - 2].leadsReferred,
+    change: Math.abs(((metrics[metrics.length - 1].leadsReferred - metrics[metrics.length - 2].leadsReferred) / 
+             metrics[metrics.length - 2].leadsReferred) * 100).toFixed(1)
+  };
+  
+  const disbursementTrend = {
+    isUp: metrics[metrics.length - 1].amountDisbursed > metrics[metrics.length - 2].amountDisbursed,
+    change: Math.abs(((metrics[metrics.length - 1].amountDisbursed - metrics[metrics.length - 2].amountDisbursed) / 
+             metrics[metrics.length - 2].amountDisbursed) * 100).toFixed(1)
+  };
+  
+  // Portfolio quality data for pie chart
+  const portfolioQualityData = [
+    { name: "On-time", value: totalOnTimeAccounts, color: "#00B368" },
+    { name: "1-30 DPD", value: totalDpd30Accounts, color: "#F5C60D" },
+    { name: "31-60 DPD", value: totalDpd60Accounts, color: "#FF9500" },
+    { name: "61-90 DPD", value: totalDpd90Accounts, color: "#FF6B00" },
+    { name: "NPA", value: totalNpaAccounts, color: "#D20A0A" }
+  ];
   
   const handleTargetMasterChange = (value: string) => {
     setSelectedTargetMaster(value);
@@ -118,7 +163,10 @@ const PerformanceAnalysisPage = () => {
   
   const deleteTarget = (id: string) => {
     setCurrentTargets(prev => prev.filter(target => target.id !== id));
-    toast("Target deleted successfully");
+    toast({
+      title: "Target deleted",
+      description: "Target has been deleted successfully"
+    });
   };
   
   const updateTargetValue = (id: string, field: 'count' | 'amount', value: string) => {
@@ -149,7 +197,10 @@ const PerformanceAnalysisPage = () => {
   };
   
   const saveTargets = () => {
-    toast.success("Targets saved successfully");
+    toast({
+      title: "Success",
+      description: "Targets saved successfully"
+    });
     setSaveSuccess(true);
     
     setCurrentTargets(prev => 
