@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Building, CheckCircle, User, Landmark, FileText, Upload } from "lucide-react";
+import { Building, CheckCircle, User, Landmark, FileText, Upload, Send } from "lucide-react";
+import AgreementPreviewDialog from "@/components/AgreementPreviewDialog";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -42,6 +43,9 @@ const formSchema = z.object({
 const OnboardingPage = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
+  const [showAgreementDialog, setShowAgreementDialog] = useState(false);
+  const [agreementSent, setAgreementSent] = useState(false);
+  const [signatureStatus, setSignatureStatus] = useState<"not_sent" | "pending" | "completed">("not_sent");
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,8 +74,12 @@ const OnboardingPage = () => {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log(values);
-    toast.success("Intermediary onboarded successfully!");
-    navigate("/bank-analysis");
+    if (signatureStatus === "completed") {
+      toast.success("Intermediary onboarded successfully!");
+      navigate("/bank-analysis");
+    } else {
+      setStep(5);
+    }
   };
 
   const nextStep = () => {
@@ -94,7 +102,27 @@ const OnboardingPage = () => {
         "accountNumber", "ifscCode", "bankName", "branchName", "establishedYear"
       ]);
       if (result) nextStep();
+    } else if (step === 4) {
+      const result = await form.trigger(["targetLeads", "targetDisbursementAmount"]);
+      if (result) nextStep();
     }
+  };
+
+  const handleSendForSignature = () => {
+    setShowAgreementDialog(false);
+    setSignatureStatus("pending");
+    setAgreementSent(true);
+    toast.success("Partnership agreement sent for e-signature");
+    
+    // Simulate signature completion after 5 seconds (for demo purposes)
+    setTimeout(() => {
+      setSignatureStatus("completed");
+      toast.success("Partnership agreement signed successfully!");
+    }, 5000);
+  };
+
+  const handleGenerateAgreement = () => {
+    setShowAgreementDialog(true);
   };
 
   return (
@@ -112,7 +140,7 @@ const OnboardingPage = () => {
         </div>
         <div className="h-0.5 flex-1 self-center mx-2 bg-gray-200 relative">
           <div className={`absolute top-0 left-0 h-full bg-finance-blue transition-all duration-300 ease-in-out`} 
-               style={{ width: `${(step - 1) * 33.33}%` }}></div>
+               style={{ width: `${(step - 1) * 25}%` }}></div>
         </div>
         <div className="flex flex-col items-center">
           <div className={`rounded-full w-10 h-10 flex items-center justify-center ${
@@ -124,7 +152,7 @@ const OnboardingPage = () => {
         </div>
         <div className="h-0.5 flex-1 self-center mx-2 bg-gray-200 relative">
           <div className={`absolute top-0 left-0 h-full bg-finance-blue transition-all duration-300 ease-in-out`} 
-               style={{ width: `${(step - 2) * 50}%` }}></div>
+               style={{ width: `${(step - 2) * 33.33}%` }}></div>
         </div>
         <div className="flex flex-col items-center">
           <div className={`rounded-full w-10 h-10 flex items-center justify-center ${
@@ -136,7 +164,7 @@ const OnboardingPage = () => {
         </div>
         <div className="h-0.5 flex-1 self-center mx-2 bg-gray-200 relative">
           <div className={`absolute top-0 left-0 h-full bg-finance-blue transition-all duration-300 ease-in-out`} 
-               style={{ width: `${(step - 3) * 100}%` }}></div>
+               style={{ width: `${(step - 3) * 33.33}%` }}></div>
         </div>
         <div className="flex flex-col items-center">
           <div className={`rounded-full w-10 h-10 flex items-center justify-center ${
@@ -145,6 +173,18 @@ const OnboardingPage = () => {
             <FileText size={20} />
           </div>
           <span className="text-sm mt-2">Documents</span>
+        </div>
+        <div className="h-0.5 flex-1 self-center mx-2 bg-gray-200 relative">
+          <div className={`absolute top-0 left-0 h-full bg-finance-blue transition-all duration-300 ease-in-out`} 
+               style={{ width: `${(step - 4) * 100}%` }}></div>
+        </div>
+        <div className="flex flex-col items-center">
+          <div className={`rounded-full w-10 h-10 flex items-center justify-center ${
+            step >= 5 ? "bg-finance-blue text-white" : "bg-gray-200 text-gray-500"
+          }`}>
+            <Send size={20} />
+          </div>
+          <span className="text-sm mt-2">Agreement</span>
         </div>
       </div>
 
@@ -155,12 +195,14 @@ const OnboardingPage = () => {
             {step === 2 && "Business Details"}
             {step === 3 && "Banking Information"}
             {step === 4 && "Document Upload & Targets"}
+            {step === 5 && "Partnership Agreement"}
           </CardTitle>
           <CardDescription>
             {step === 1 && "Enter the basic details of the intermediary"}
             {step === 2 && "Enter business and registration details"}
             {step === 3 && "Enter banking information for commission transfers"}
             {step === 4 && "Upload required documents and set performance targets"}
+            {step === 5 && "Review and sign the partnership agreement"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -490,6 +532,67 @@ const OnboardingPage = () => {
                   </div>
                 </div>
               )}
+
+              {step === 5 && (
+                <div className="space-y-6">
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-finance-blue-light p-3 rounded-full">
+                        <FileText className="h-6 w-6 text-finance-blue" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium">Partnership Agreement</h3>
+                        <p className="text-gray-500 mt-1">
+                          The final step is to review and sign the partnership agreement between your organization and our company.
+                        </p>
+                        
+                        <div className="mt-4 flex flex-col space-y-4">
+                          {signatureStatus === "not_sent" && (
+                            <Button 
+                              type="button" 
+                              onClick={handleGenerateAgreement}
+                              className="w-fit"
+                            >
+                              <FileText className="mr-2 h-4 w-4" /> 
+                              Generate and Preview Agreement
+                            </Button>
+                          )}
+                          
+                          {signatureStatus === "pending" && (
+                            <div className="flex items-center text-amber-600 bg-amber-50 px-4 py-3 rounded-md">
+                              <Clock className="h-5 w-5 mr-2" />
+                              <span>Agreement sent for e-signature. Awaiting signatures from all parties.</span>
+                            </div>
+                          )}
+                          
+                          {signatureStatus === "completed" && (
+                            <div className="flex items-center text-green-600 bg-green-50 px-4 py-3 rounded-md">
+                              <CheckCircle className="h-5 w-5 mr-2" />
+                              <span>Partnership agreement has been signed by all parties.</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="border border-dashed border-gray-300 rounded-md p-6">
+                    <h4 className="font-medium mb-2">E-Signature Process:</h4>
+                    <ol className="list-decimal ml-5 space-y-2">
+                      <li className={`${agreementSent || signatureStatus !== "not_sent" ? "text-gray-400" : ""}`}>
+                        Generate and preview the agreement
+                      </li>
+                      <li className={`${signatureStatus === "pending" || signatureStatus === "completed" ? "text-gray-400" : ""}`}>
+                        Send the agreement for e-signature to all parties
+                      </li>
+                      <li className={`${signatureStatus === "completed" ? "text-gray-400" : ""}`}>
+                        All parties digitally sign the agreement
+                      </li>
+                      <li>Complete the onboarding process</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
             </form>
           </Form>
         </CardContent>
@@ -501,17 +604,33 @@ const OnboardingPage = () => {
           ) : (
             <div></div>
           )}
-          {step < 4 ? (
+          {step < 5 ? (
             <Button type="button" onClick={validateStep}>
               Next
             </Button>
           ) : (
-            <Button type="submit" onClick={form.handleSubmit(onSubmit)} className="bg-finance-green hover:bg-finance-green-dark">
+            <Button 
+              type="submit" 
+              onClick={form.handleSubmit(onSubmit)} 
+              className={`bg-finance-green hover:bg-finance-green-dark ${signatureStatus !== "completed" && "opacity-50 cursor-not-allowed"}`}
+              disabled={signatureStatus !== "completed"}
+            >
               <CheckCircle className="mr-2 h-4 w-4" /> Complete Onboarding
             </Button>
           )}
         </CardFooter>
       </Card>
+
+      <AgreementPreviewDialog
+        open={showAgreementDialog}
+        onOpenChange={setShowAgreementDialog}
+        onSendForSignature={handleSendForSignature}
+        agreementData={{
+          name: form.getValues("name"),
+          companyName: form.getValues("companyName"),
+          email: form.getValues("email"),
+        }}
+      />
     </div>
   );
 };
