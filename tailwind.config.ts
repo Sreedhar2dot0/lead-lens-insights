@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,35 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors for our loan origination system
+				finance: {
+					blue: {
+						light: '#E6F0FF',
+						DEFAULT: '#0066CC',
+						dark: '#004C99'
+					},
+					green: {
+						light: '#E6F9F1',
+						DEFAULT: '#00B368',
+						dark: '#00854D'
+					},
+					yellow: {
+						light: '#FFF8E6',
+						DEFAULT: '#FFB800',
+						dark: '#CC9200'
+					},
+					red: {
+						light: '#FFEBEB',
+						DEFAULT: '#FF3B3B',
+						dark: '#CC0000'
+					},
+					gray: {
+						lightest: '#F8F9FB',
+						light: '#EEF1F6',
+						DEFAULT: '#94A3B8',
+						dark: '#4A5568'
+					}
 				}
 			},
 			borderRadius: {
