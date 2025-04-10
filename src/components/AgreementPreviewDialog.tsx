@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Dialog,
@@ -9,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Send, Clock, CheckCircle } from "lucide-react";
+import { FileText, Download, Send, ClockIcon, CheckCircle } from "lucide-react";
 
 type AgreementPreviewDialogProps = {
   open: boolean;

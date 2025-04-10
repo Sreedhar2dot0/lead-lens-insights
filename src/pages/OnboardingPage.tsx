@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Building, CheckCircle, User, Landmark, FileText, Upload, Send } from "lucide-react";
+import { Building, CheckCircle, User, Landmark, FileText, Upload, Send, ClockIcon } from "lucide-react";
 import AgreementPreviewDialog from "@/components/AgreementPreviewDialog";
 
 const formSchema = z.object({
@@ -560,7 +560,7 @@ const OnboardingPage = () => {
                           
                           {signatureStatus === "pending" && (
                             <div className="flex items-center text-amber-600 bg-amber-50 px-4 py-3 rounded-md">
-                              <Clock className="h-5 w-5 mr-2" />
+                              <ClockIcon className="h-5 w-5 mr-2" />
                               <span>Agreement sent for e-signature. Awaiting signatures from all parties.</span>
                             </div>
                           )}
